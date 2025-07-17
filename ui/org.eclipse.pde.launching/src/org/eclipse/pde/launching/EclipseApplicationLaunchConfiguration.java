@@ -151,11 +151,9 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 				programArgs.add(1, path.toOSString()); //This could be the branded launcher if we want (also this does not bring much)
 				programArgs.add(2, "-name"); //$NON-NLS-1$
 				programArgs.add(3, "Eclipse"); //This should be the name of the product //$NON-NLS-1$
-				if (programArgs.contains("-showsplash")) 
-				{
-					programArgs.add(4, "-showsplash");
-					programArgs.add(5, "600"); // or read from config
-				}
+				programArgs.add(4, "-showsplash");
+				programArgs.add(5, "org.example.splash"); // test plugin ID
+
 
 			} else {
 				programArgs.add(0, "-showsplash"); //$NON-NLS-1$
