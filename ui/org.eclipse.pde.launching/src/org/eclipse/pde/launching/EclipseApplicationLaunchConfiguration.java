@@ -15,6 +15,8 @@
 package org.eclipse.pde.launching;
 
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -94,6 +96,14 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 	@Override
 	public String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
 		ArrayList<String> programArgs = new ArrayList<>();
+
+		try{
+			FileWriter fw = new FileWriter("/tmp/pde-debug.txt");
+			fw.write("Running custom EclipseApplicationLaunchConfiguration\n");
+			fw.close();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		// If a product is specified, then add it to the program args
 		if (configuration.getAttribute(IPDELauncherConstants.USE_PRODUCT, false)) {
