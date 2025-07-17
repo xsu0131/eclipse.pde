@@ -135,7 +135,12 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 		Collections.addAll(programArgs, args);
 
 		if (!programArgs.contains("-nosplash") && showSplash) { //$NON-NLS-1$
+			// Added debug statements:
+			System.out.println("[DEBUG] !programArgs.contains(-nosplash) && showSplash = " + showSplash);
+			System.out.println("[DEBUG] TargetPlatform version = " + TargetPlatformHelper.getTargetVersion());
+
 			if (TargetPlatformHelper.getTargetVersion() >= 3.1) {
+				System.out.println("[DEBUG] Using new splash argument: -showsplash org.example.splash");
 				programArgs.add(0, "-launcher"); //$NON-NLS-1$
 
 				IPath path = null;
@@ -156,6 +161,7 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 
 
 			} else {
+				System.out.println("[DEBUG] Using fallback splash argument: " + computeShowsplashArgument());
 				programArgs.add(0, "-showsplash"); //$NON-NLS-1$
 				programArgs.add(1, computeShowsplashArgument());
 			}
@@ -165,8 +171,10 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 
 	private String computeShowsplashArgument() {
 		IPath eclipseHome = IPath.fromOSString(TargetPlatform.getLocation());
-		IPath fullPath = eclipseHome.append("eclipse"); //$NON-NLS-1$
-		return fullPath.toOSString() + " -showsplash 600"; //$NON-NLS-1$
+		IPath fullPath = eclipseHome.append("eclipse");
+		String splashArg = fullPath.toOSString() + " -showsplash 600";
+		System.out.println("[DEBUG] computeShowsplashArgument() returns: " + splashArg);
+		return splashArg;
 	}
 
 	@Override
