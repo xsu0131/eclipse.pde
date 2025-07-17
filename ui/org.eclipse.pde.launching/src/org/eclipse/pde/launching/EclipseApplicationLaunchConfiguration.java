@@ -134,6 +134,7 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 		String[] args = super.getProgramArguments(configuration);
 		Collections.addAll(programArgs, args);
 
+		String customSplash = configuration.getAttribute("customSplash", ""); // read custom splash file from config.
 		if (!programArgs.contains("-nosplash") && showSplash) { //$NON-NLS-1$
 			if (TargetPlatformHelper.getTargetVersion() >= 3.1) {
 				programArgs.add(0, "-launcher"); //$NON-NLS-1$
@@ -152,7 +153,14 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 				programArgs.add(2, "-name"); //$NON-NLS-1$
 				programArgs.add(3, "Eclipse"); //This should be the name of the product //$NON-NLS-1$
 				programArgs.add(4, "-showsplash"); //$NON-NLS-1$
-				programArgs.add(5, "600"); //$NON-NLS-1$
+				if (customSplash.isEmpty()) //$NON-NLS-1$
+				{
+					programArgs.add(5, "600"); //$NON-NLS-1$
+				}
+				else
+				{
+					programArgs.add(5, customSplash); //$NON-NLS-1$
+				}
 			} else {
 				programArgs.add(0, "-showsplash"); //$NON-NLS-1$
 				programArgs.add(1, computeShowsplashArgument());
