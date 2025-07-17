@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2005, 2024 IBM Corporation and others.
+ * Copyright (c) 2005, 2021 IBM Corporation and others.
  *
  * This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License 2.0
@@ -15,16 +15,12 @@
 package org.eclipse.pde.launching;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,7 +37,6 @@ import org.eclipse.pde.core.plugin.IPluginModelBase;
 import org.eclipse.pde.core.plugin.TargetPlatform;
 import org.eclipse.pde.internal.core.ClasspathHelper;
 import org.eclipse.pde.internal.core.TargetPlatformHelper;
-import org.eclipse.pde.internal.core.ifeature.IFeature;
 import org.eclipse.pde.internal.core.util.CoreUtility;
 import org.eclipse.pde.internal.launching.IPDEConstants;
 import org.eclipse.pde.internal.launching.launcher.BundleLauncherHelper;
@@ -91,19 +86,9 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 	 */
 	private String fWorkspaceLocation;
 
-	private Map<IFeature, Boolean> fFeatures;
-
 	@Override
 	public String[] getProgramArguments(ILaunchConfiguration configuration) throws CoreException {
 		ArrayList<String> programArgs = new ArrayList<>();
-
-		try{
-			FileWriter fw = new FileWriter("/tmp/pde-debug.txt");
-			fw.write("Running custom EclipseApplicationLaunchConfiguration\n");
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
 
 		// If a product is specified, then add it to the program args
 		if (configuration.getAttribute(IPDELauncherConstants.USE_PRODUCT, false)) {
@@ -131,26 +116,21 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 		}
 
 		String productID = LaunchConfigurationHelper.getProductID(configuration);
-		Properties prop = LaunchConfigurationHelper.createConfigIniFile(configuration, productID, fAllBundles, fFeatures, fModels, getConfigDir(configuration));
+		Properties prop = LaunchConfigurationHelper.createConfigIniFile(configuration, productID, fAllBundles, fModels, getConfigDir(configuration));
 		boolean showSplash = prop.containsKey("osgi.splashPath") || prop.containsKey("splashLocation"); //$NON-NLS-1$ //$NON-NLS-2$
 		TargetPlatformHelper.checkPluginPropertiesConsistency(fAllBundles, getConfigDir(configuration));
 		programArgs.add("-configuration"); //$NON-NLS-1$
-		programArgs.add(IPath.fromOSString(getConfigDir(configuration).getPath()).addTrailingSeparator().toPath().toUri().toString());
+		programArgs.add("file:" + IPath.fromOSString(getConfigDir(configuration).getPath()).addTrailingSeparator().toString()); //$NON-NLS-1$
 
 		// add the output folder names
 		programArgs.add("-dev"); //$NON-NLS-1$
-		programArgs.add(ClasspathHelper.getDevEntriesProperties(getConfigDir(configuration).toString() + "/dev.properties", fAllBundles).toUri().toString()); //$NON-NLS-1$
+		programArgs.add(ClasspathHelper.getDevEntriesProperties(getConfigDir(configuration).toString() + "/dev.properties", fAllBundles)); //$NON-NLS-1$
 
 		String[] args = super.getProgramArguments(configuration);
 		Collections.addAll(programArgs, args);
 
 		if (!programArgs.contains("-nosplash") && showSplash) { //$NON-NLS-1$
-			// Added debug statements:
-			System.out.println("[DEBUG] !programArgs.contains(-nosplash) && showSplash = " + showSplash);
-			System.out.println("[DEBUG] TargetPlatform version = " + TargetPlatformHelper.getTargetVersion());
-
 			if (TargetPlatformHelper.getTargetVersion() >= 3.1) {
-				System.out.println("[DEBUG] Using new splash argument: -showsplash org.example.splash");
 				programArgs.add(0, "-launcher"); //$NON-NLS-1$
 
 				IPath path = null;
@@ -166,12 +146,9 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 				programArgs.add(1, path.toOSString()); //This could be the branded launcher if we want (also this does not bring much)
 				programArgs.add(2, "-name"); //$NON-NLS-1$
 				programArgs.add(3, "Eclipse"); //This should be the name of the product //$NON-NLS-1$
-				programArgs.add(4, "-showsplash");
-				programArgs.add(5, "org.example.splash"); // test plugin ID
-
-
+				programArgs.add(4, "-showsplash"); //$NON-NLS-1$
+				programArgs.add(5, "600"); //$NON-NLS-1$
 			} else {
-				System.out.println("[DEBUG] Using fallback splash argument: " + computeShowsplashArgument());
 				programArgs.add(0, "-showsplash"); //$NON-NLS-1$
 				programArgs.add(1, computeShowsplashArgument());
 			}
@@ -181,10 +158,8 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 
 	private String computeShowsplashArgument() {
 		IPath eclipseHome = IPath.fromOSString(TargetPlatform.getLocation());
-		IPath fullPath = eclipseHome.append("eclipse");
-		String splashArg = fullPath.toOSString() + " -showsplash 600";
-		System.out.println("[DEBUG] computeShowsplashArgument() returns: " + splashArg);
-		return splashArg;
+		IPath fullPath = eclipseHome.append("eclipse"); //$NON-NLS-1$
+		return fullPath.toOSString() + " -showsplash 600"; //$NON-NLS-1$
 	}
 
 	@Override
@@ -216,7 +191,7 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 		}
 
 		// Clear workspace and prompt, if necessary
-		LauncherUtils.clearWorkspace(configuration, fWorkspaceLocation, launchMode, subMon.split(1));
+		LauncherUtils.clearWorkspace(configuration, fWorkspaceLocation, subMon.split(1));
 
 		// clear config area, if necessary
 		if (configuration.getAttribute(IPDELauncherConstants.CONFIG_CLEAR_AREA, false)) {
@@ -227,20 +202,12 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 	}
 
 	@Override
-	Set<IPluginModelBase> computeLaunchedPlugins(ILaunchConfiguration configuration, IProgressMonitor monitor) throws CoreException {
-		if (configuration.getAttribute(IPDELauncherConstants.GENERATE_PROFILE, false)) {
-			fFeatures = new HashMap<>();
-		} else {
-			fFeatures = null;
-		}
-		fModels = BundleLauncherHelper.getMergedBundleMap(configuration, false, fFeatures);
-		fAllBundles = fModels.keySet().stream().collect(Collectors.groupingBy(m -> m.getPluginBase().getId()));
-		return fModels.keySet();
-	}
-
-	@Override
 	protected void preLaunchCheck(ILaunchConfiguration configuration, ILaunch launch, IProgressMonitor monitor) throws CoreException {
 		fWorkspaceLocation = null;
+
+		fModels = BundleLauncherHelper.getMergedBundleMap(configuration, false);
+		fAllBundles = fModels.keySet().stream().collect(Collectors.groupingBy(m -> m.getPluginBase().getId()));
+
 		validateConfigIni(configuration);
 		super.preLaunchCheck(configuration, launch, monitor);
 	}
@@ -253,18 +220,17 @@ public class EclipseApplicationLaunchConfiguration extends AbstractPDELaunchConf
 
 			File templateFile = new File(templateLoc);
 			if (!templateFile.exists()) {
-				if (!LauncherUtils.generateConfigIni()) {
+				if (!LauncherUtils.generateConfigIni())
 					throw new CoreException(Status.CANCEL_STATUS);
 				// with the way the launcher works, if a config.ini file is not found one will be generated automatically.
 				// This check was to warn the user a config.ini needs to be generated. - bug 161265, comment #7
-				}
 			}
 		}
 	}
 
 	@Override
 	protected void validatePluginDependencies(ILaunchConfiguration configuration, IProgressMonitor monitor) throws CoreException {
-		EclipsePluginValidationOperation op = new EclipsePluginValidationOperation(configuration, fModels.keySet(), launchMode);
+		EclipsePluginValidationOperation op = new EclipsePluginValidationOperation(configuration, fModels.keySet());
 		LaunchPluginValidator.runValidationOperation(op, monitor);
 	}
 
